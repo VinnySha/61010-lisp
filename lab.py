@@ -234,11 +234,18 @@ def lte(*args):
     return True
 
 
+def is_scheme_false(value):
+    """Only #f is false in Scheme; 0, (), etc. are truthy."""
+    return value is False
+
+
 def negation(*args):
     """Function that negates the truth value of the argument"""
     if len(args) > 1 or len(args) == 0:
         raise SchemeEvaluationError("not evaluated with 0 or >1 args")
-    return not args[0]
+    if is_scheme_false(args[0]):
+        return True
+    return False
 
 
 def cons_car(*cons):
@@ -536,25 +543,31 @@ def evaluate(tree, frame=make_initial_frame()):
         pred = tree[1]
         true_exp = tree[2]
         false_exp = tree[3]
-        return evaluate(true_exp if evaluate(pred, frame) else false_exp, frame)
+        pred_val = evaluate(pred, frame)
+        branch = false_exp if is_scheme_false(pred_val) else true_exp
+        return evaluate(branch, frame)
 
     elif first == "and":
         args = tree[1:]
         if len(args) == 0:
             return True
+        last = True
         for arg in args:
-            if not evaluate(arg, frame):
-                return False
-        return True
+            last = evaluate(arg, frame)
+            if is_scheme_false(last):
+                return last
+        return last
 
     elif first == "or":
         args = tree[1:]
         if len(args) == 0:
             return False
+        last = False
         for arg in args:
-            if evaluate(arg, frame):
-                return True
-        return False
+            last = evaluate(arg, frame)
+            if not is_scheme_false(last):
+                return last
+        return last
 
     elif first == "del":
         if len(tree) != 2:
