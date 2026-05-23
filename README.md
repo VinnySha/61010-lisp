@@ -8,79 +8,51 @@ A Scheme interpreter written in Python. Type expressions, it tokenizes them, bui
 python3 lab.py
 ```
 
-## How the syntax works
+## Syntax cheat sheet
 
-Scheme code is made of **S-expressions** (symbolic expressions). There are only a few kinds of things you can write:
-
-**Atoms** — numbers (`42`, `-3.5`), booleans (`#t`, `#f`), or names/symbols (`x`, `foo`, `+`). Symbols are just strings; the interpreter decides later whether `+` is a variable or an operation.
-
-**Lists** — anything in parentheses. A list is either a function call or a special form:
+Everything is either an **atom** (number, `#t`/`#f`, or a name like `x`) or a **list** in parentheses.
 
 ```scheme
-(+ 2 3)           ; => 5
+(+ 2 3)              ; 5 — prefix notation
+(+ 2 (- 5 3))
 ```
 
-The first element is the operator or keyword; the rest are arguments. This is **prefix notation**: the function name comes first, then its arguments. No commas, no infix `2 + 3`.
+`()` is the empty list (Python `[]` internally, not a `Pair`). `;` comments to end of line.
 
-**The empty list** — `()` is its own value (not a Pair). You’ll see it at the end of linked lists built with `cons`.
+### Truthiness
 
-**Nesting** — lists can contain lists. The parser turns nested parens into nested Python lists:
+Only `#f` is false. `0`, `()`, and other values count as true in `if`, `and`, and `or`.
 
-```scheme
-(+ 2 (- 5 3))     ; parses to something like ['+', 2, ['-', 5, 3]]
-```
+`not` maps `#f` → `#t` and anything else → `#f`.
 
-**Comments** — `;` starts a comment that runs to the end of the line.
+### Calls vs special forms
 
-### Special forms vs normal calls
+**Calls:** evaluate each subexpression, then apply the first result.
 
-Most parenthesized expressions are evaluated by evaluating every subexpression, then applying the first result as a function. A few forms break that rule and are handled inside the interpreter:
+**Special forms** (handled in `evaluate`, not as normal calls):
 
-
-| Form        | Role                                               |
-| ----------- | -------------------------------------------------- |
-| `define`    | bind a name in the current frame                   |
-| `lambda`    | create a function                                  |
-| `if`        | only evaluate one branch                           |
-| `and`, `or` | short-circuit; stop as soon as the answer is known |
-| `let`       | local bindings in a new frame                      |
-| `set!`      | change an existing binding (searches outward)      |
-| `del`       | remove a binding from the *current* frame only     |
-
-
-Example:
-
-```scheme
-(if (< x 0) (- x) x)    ; absolute value — only one of the branches runs
-```
-
-### Defining things
+| Form | Behavior |
+|------|----------|
+| `define` | bind in the current frame |
+| `lambda` | create a function (closes over the defining frame) |
+| `if` | evaluate predicate; run exactly one branch |
+| `and` / `or` | short-circuit; return `#f` or the value that decided the result |
+| `let` | evaluate all bindings in the outer frame, then body in a new child frame |
+| `set!` | update the nearest existing binding up the frame chain |
+| `del` | remove a binding from the **current** frame only; error if not local |
 
 ```scheme
 (define x 10)
-(define (square n) (* n n))    ; shorthand for (define square (lambda (n) ...))
-
-(define my-add
-  (lambda (a b)
-    (+ a b)))
+(define (sq n) (* n n))
 ```
 
-`lambda` captures the frame where it was defined. When you call it, parameters are bound in a new child frame and the body is evaluated there.
+### Lists
 
-### Lists from `cons`
+Lists are `Pair` chains ending in `()`. `(cons 1 2)` is a pair; `(list 1 2 3)` is a proper list. `append` builds a new list without mutating inputs.
 
-Lists are singly-linked chains of `Pair` objects, ending in `()`. `(cons 1 2)` is just a pair, not necessarily a list. A proper list looks like:
+### Built-ins (parent frame)
 
-```scheme
-(cons 1 (cons 2 (cons 3 ())))
-; same idea as (list 1 2 3)
-```
+`+` `-` `*` `/`, `equal?`, comparisons, `not`, `cons` `car` `cdr`, `list` `list?` `length` `list-ref` `append`, `begin`.
 
-Use `car` / `cdr` to take the first element or the rest. `list`, `append`, `length`, `list-ref`, and `list?` work on these structures.
-
-### Built-ins...
-
-- Comparisons: `equal?`, `<`, `<=`, `>`, `>=` (all arguments must satisfy the relation)
-- `not` — `#f` in, `#t` out; anything else gives `#f`
-- `begin` — evaluate each expression for side effects, return the last one
+`map`, `filter`, and `reduce` are defined in Scheme in `test_files/map_filter_reduce.scm` — load that file (or pass it on the command line) before using them.
 
