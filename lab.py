@@ -367,7 +367,7 @@ scheme_builtins = {
     "begin" : do_begin
 }
 
-special_forms = {"lambda", "define", "if", "and", "or", "del", "let"}
+special_forms = {"lambda", "define", "if", "and", "or", "del", "let", "set!"}
 
 
 ##############
@@ -395,6 +395,14 @@ class Frame:
 
     def __setitem__(self, var, value):
         self.mapping[var] = value
+
+    def find_defining_frame(self, var):
+        f = self
+        while f is not None:
+            if var in f.mapping:
+                return f
+            f = f.parent
+        return None
 
     def __str__(self):
         return str(self.mapping)
@@ -578,6 +586,19 @@ def evaluate(tree, frame=make_initial_frame()):
         for name, value in bound.items():
             let_frame[name] = value
         return evaluate(body, let_frame)
+
+    elif first == "set!":
+        if len(tree) != 3:
+            raise SchemeEvaluationError("set! called with wrong # of args")
+        var = tree[1]
+        if not isinstance(var, str):
+            raise SchemeEvaluationError("set! VAR is not a string")
+        value = evaluate(tree[2], frame)
+        defining_frame = frame.find_defining_frame(var)
+        if defining_frame is None:
+            raise SchemeNameError(var)
+        defining_frame[var] = value
+        return value
 
     func = evaluate(first, frame)
 
