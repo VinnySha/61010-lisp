@@ -195,6 +195,7 @@ def calc_div(*args):
 
 
 def equals(*args):
+    """Function that checks if all args from left to right are equal"""
     for i in range(len(args) - 1):
         if args[i] != args[i + 1]:
             return False
@@ -202,6 +203,7 @@ def equals(*args):
 
 
 def gt(*args):
+    """Function that checks if args are strictly increasing"""
     for i in range(len(args) - 1):
         if args[i] <= args[i + 1]:
             return False
@@ -209,6 +211,7 @@ def gt(*args):
 
 
 def gte(*args):
+     """Function that checks if args are equal or increasing"""
     for i in range(len(args) - 1):
         if args[i] < args[i + 1]:
             return False
@@ -216,6 +219,7 @@ def gte(*args):
 
 
 def lt(*args):
+    """Function that checks if args are strictly decreasing"""
     for i in range(len(args) - 1):
         if args[i] >= args[i + 1]:
             return False
@@ -223,6 +227,7 @@ def lt(*args):
 
 
 def lte(*args):
+    """Function that checks if args are equal or decreasing"""
     for i in range(len(args) - 1):
         if args[i] > args[i + 1]:
             return False
@@ -230,36 +235,42 @@ def lte(*args):
 
 
 def negation(*args):
+    """Function that negates the truth value of the argument"""
     if len(args) > 1 or len(args) == 0:
         raise SchemeEvaluationError("not evaluated with 0 or >1 args")
     return not args[0]
 
 
 def cons_car(*cons):
+    """Function that returns the first element of a cons"""
     if len(cons) != 1 or not isinstance(cons[0], Pair):
         raise SchemeEvaluationError("car called on non-cons object or too many args")
     return cons[0].get_car()
 
 
 def cons_cdr(*cons):
+    """Function that returns the second element of a cons"""
     if len(cons) != 1 or not isinstance(cons[0], Pair):
         raise SchemeEvaluationError("cdr called on non-cons object or too many args")
     return cons[0].get_cdr()
 
 
 def cons(*args):
+    """Function that creates a new cons with the given args"""
     if len(args) != 2:
         raise SchemeEvaluationError("incorr. # args passed to cons")
     return Pair(args[0], args[1])
 
 
 def make_list(*args):
+    """Function that creates a new list with the given args"""
     if len(args) == 0:
         return []
     return Pair(args[0], make_list(*args[1:]))
 
 
 def check_if_list(*args):
+    """Function that checks if args is a list"""
     if len(args) != 1:
         raise SchemeEvaluationError("wrong # args for call to list?")
     
@@ -268,6 +279,7 @@ def check_if_list(*args):
     return isinstance(args[0], Pair) and check_if_list(args[0].get_cdr())
 
 def length(*args):
+    """Function that returns the length of a list"""
     if len(args) != 1 or not isinstance(args[0], (Pair, list)):
         raise SchemeEvaluationError("wrong # args for call to length")
     elif isinstance(args[0], list):
@@ -276,6 +288,7 @@ def length(*args):
 
 
 def index(*args):
+    """Function that returns the element at the given index"""
     if len(args) != 2:
         raise SchemeEvaluationError("wrong # args passed to list-ref")
     input_list = args[0]
@@ -293,7 +306,22 @@ def index(*args):
     return loop(input_list, ind)
             
 
+def copy_list(lst):
+    """Shallow copy of a linked list (new Pair nodes, same element values)."""
+    if lst == []:
+        return []
+    return Pair(lst.get_car(), copy_list(lst.get_cdr()))
+
+
+def append_two(a, b):
+    """Append linked list b onto the end of a; both must be lists. Returns a new list."""
+    if a == []:
+        return copy_list(b)
+    return Pair(a.get_car(), append_two(a.get_cdr(), b))
+
+
 def list_append(*args):
+    """Function that appends all args together"""
     # Check if any argument is not a list
     for arg in args:
         if not check_if_list(arg):
@@ -306,17 +334,8 @@ def list_append(*args):
     # Recursively append lists and build the cons structure
     result = []
     for lst in args:
-        for item in lst:
-            result = cons(item, result)
-    
-    # Reverse the result to ensure correct order
-    def reverse_cons(lst):
-        if not lst:
-            return []
-        head, tail = lst
-        return cons(head, reverse_cons(tail))
-    
-    return reverse_cons(result)
+        result = append_two(result, lst)
+    return result
 
 
 def do_begin(*args):
