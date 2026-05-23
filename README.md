@@ -1,4 +1,4 @@
-# LISP Interpreter (6.101)
+# LISP Interpreter
 
 A Scheme interpreter written in Python. Type expressions, it tokenizes them, builds a parse tree, and evaluates them in nested environments (python frames).
 
@@ -56,3 +56,4 @@ Lists are `Pair` chains ending in `()`. `(cons 1 2)` is a pair; `(list 1 2 3)` i
 
 `map`, `filter`, and `reduce` are defined in Scheme in `test_files/map_filter_reduce.scm` — load that file (or pass it on the command line) before using them.
 
+made for MIT 6.1010
