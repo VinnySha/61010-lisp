@@ -561,12 +561,23 @@ def evaluate(tree, frame=make_initial_frame()):
     return func(*evaluated)  # unpack list of args
 
 
+run_doctest = False
+run_repl = True
+
 if __name__ == "__main__":
     import os
 
     sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
     import schemerepl
 
-    schemerepl.SchemeREPL(
-        sys.modules[__name__], use_frames=True, verbose=False, repl_frame=None
-    ).cmdloop()
+    my_frame = make_initial_frame()
+    for fname in sys.argv[1:]:
+        evaluate_file(fname, my_frame)
+
+    if run_repl:
+        schemerepl.SchemeREPL(
+            sys.modules[__name__],
+            use_frames=True,
+            verbose=False,
+            repl_frame=my_frame,
+        ).cmdloop()
