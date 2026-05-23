@@ -211,7 +211,7 @@ def gt(*args):
 
 
 def gte(*args):
-     """Function that checks if args are equal or increasing"""
+    """Function that checks if args are equal or increasing"""
     for i in range(len(args) - 1):
         if args[i] < args[i + 1]:
             return False
@@ -452,6 +452,15 @@ class Pair:
 def make_initial_frame():
     init_frame = Frame(scheme_builtins, {})
     return init_frame
+
+
+def evaluate_file(filename, frame=None):
+    """Read and evaluate the single Scheme expression in a file."""
+    if frame is None:
+        frame = make_initial_frame()
+    with open(filename) as f:
+        source = f.read()
+    return evaluate(parse(tokenize(source)), frame)
 
 
 def evaluate(tree, frame=make_initial_frame()):
