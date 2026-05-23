@@ -367,7 +367,7 @@ scheme_builtins = {
     "begin" : do_begin
 }
 
-special_forms = {"lambda", "define", "if", "and", "or"}
+special_forms = {"lambda", "define", "if", "and", "or", "del"}
 
 
 ##############
@@ -450,8 +450,8 @@ class Pair:
 
 
 def make_initial_frame():
-    init_frame = Frame(scheme_builtins, {})
-    return init_frame
+    builtin_frame = Frame(None, scheme_builtins)
+    return Frame(builtin_frame, {})
 
 
 def evaluate_file(filename, frame=None):
@@ -547,6 +547,18 @@ def evaluate(tree, frame=make_initial_frame()):
             if evaluate(arg, frame):
                 return True
         return False
+
+    elif first == "del":
+        if len(tree) != 2:
+            raise SchemeEvaluationError("del called with wrong # of args")
+        var = tree[1]
+        if not isinstance(var, str):
+            raise SchemeEvaluationError("del VAR is not a string")
+        if var in frame.mapping:
+            value = frame.mapping[var]
+            del frame.mapping[var]
+            return value
+        raise SchemeNameError(var)
 
     func = evaluate(first, frame)
 
