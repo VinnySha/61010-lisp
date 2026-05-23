@@ -367,7 +367,7 @@ scheme_builtins = {
     "begin" : do_begin
 }
 
-special_forms = {"lambda", "define", "if", "and", "or", "del"}
+special_forms = {"lambda", "define", "if", "and", "or", "del", "let"}
 
 
 ##############
@@ -559,6 +559,25 @@ def evaluate(tree, frame=make_initial_frame()):
             del frame.mapping[var]
             return value
         raise SchemeNameError(var)
+
+    elif first == "let":
+        if len(tree) != 3:
+            raise SchemeEvaluationError("let called with wrong # of args")
+        bindings, body = tree[1], tree[2]
+        if not isinstance(bindings, list):
+            raise SchemeEvaluationError("let bindings are not a list")
+        bound = {}
+        for binding in bindings:
+            if not isinstance(binding, list) or len(binding) != 2:
+                raise SchemeEvaluationError("invalid let binding")
+            name, expr = binding[0], binding[1]
+            if not isinstance(name, str):
+                raise SchemeEvaluationError("let binding name is not a string")
+            bound[name] = evaluate(expr, frame)
+        let_frame = Frame(frame, {})
+        for name, value in bound.items():
+            let_frame[name] = value
+        return evaluate(body, let_frame)
 
     func = evaluate(first, frame)
 
